@@ -33,8 +33,14 @@ BASE_URL = os.getenv("RENDER_EXTERNAL_URL", "http://localhost:8000")
 
 @app.post("/upload/")
 async def upload_file(file: UploadFile = File(...)):
-    """Загружаем изображение в Cloudinary и возвращаем ссылку"""
-    result = cloudinary.uploader.upload(file.file)
+    """Загружаем изображение в Cloudinary с оригинальным именем"""
+    original_filename = os.path.splitext(file.filename)[0]  # Убираем расширение
+    result = cloudinary.uploader.upload(
+        file.file,
+        public_id=original_filename,  # Устанавливаем оригинальное имя файла
+        unique_filename=False,  # Отключаем генерацию случайных имен
+        overwrite=True  # Разрешаем перезапись (если нужно)
+    )
     return {"url": result["secure_url"]}
 
 
