@@ -10,6 +10,7 @@ import shutil
 import os
 import cloudinary
 import cloudinary.uploader
+import cloudinary.api
 
 app = FastAPI()
 
@@ -33,16 +34,38 @@ BASE_URL = os.getenv("RENDER_EXTERNAL_URL", "http://localhost:8000")
 
 @app.post("/upload/")
 async def upload_file(file: UploadFile = File(...)):
-    """Загружаем изображение в Cloudinary с оригинальным именем"""
+    """Загружаем изображение в Cloudinary и возвращаем ссылку без версии"""
     original_filename = os.path.splitext(file.filename)[0]  # Убираем расширение
     result = cloudinary.uploader.upload(
         file.file,
-        public_id=original_filename,  # Устанавливаем оригинальное имя файла
-        unique_filename=False,  # Отключаем генерацию случайных имен
-        overwrite=True  # Разрешаем перезапись (если нужно)
+        public_id=original_filename,  # Фиксированное имя файла
+        unique_filename=False,  # Отключаем случайные имена
+        overwrite=True  # Разрешаем перезапись
     )
-    return {"url": result["secure_url"]}
 
+    # Убираем версию из ссылки
+    clean_url = result["secure_url"].replace(f"/v{result['version']}/", "/")
+
+    return {"url": clean_url}
+
+
+@app.get("/cloudinary-images/")
+async def list_cloudinary_images(next_cursor: str = None):
+    """Получает все ссылки на изображения из Cloudinary с постраничным запросом"""
+    try:
+        params = {"type": "upload", "max_results": 100}
+        if next_cursor:
+            params["next_cursor"] = next_cursor
+
+        response = cloudinary.api.resources(**params)
+        image_urls = [item["secure_url"] for item in response["resources"]]
+
+        return {
+            "images": image_urls,
+            "next_cursor": response.get("next_cursor")  # Для следующей страницы
+        }
+    except Exception as e:
+        return {"error": str(e)}
 
 
 #Апдейт всех существующих url на картинки
@@ -56,7 +79,7 @@ def update_image_urls(new_host: str, db: Session = Depends(get_db)):
     for product in products:
         if product.image_url:
             filename = product.image_url.split("/")[-1]
-            new_url = f"http://{new_host}/images/{filename}"
+            new_url = f"http://{new_host}/{filename}"
             product.image_url = new_url
 
     db.commit()
