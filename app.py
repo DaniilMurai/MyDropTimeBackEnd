@@ -8,9 +8,18 @@ from pydantic import BaseModel
 import logging
 import shutil
 import os
-import uvicorn
+import cloudinary
+import cloudinary.uploader
 
 app = FastAPI()
+
+# Configuration       
+cloudinary.config( 
+    cloud_name = "ddbkszi8q", 
+    api_key = "277472452144523", 
+    api_secret = "rs0vTR9lMkZ3tTV2tDo6EiIFH18", # Click 'View API Keys' above to copy your API secret
+    secure=True
+)
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -24,12 +33,9 @@ BASE_URL = os.getenv("RENDER_EXTERNAL_URL", "http://localhost:8000")
 
 @app.post("/upload/")
 async def upload_file(file: UploadFile = File(...)):
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    return {"url": f"{BASE_URL}/images/{file.filename}"}
+    """Загружаем изображение в Cloudinary и возвращаем ссылку"""
+    result = cloudinary.uploader.upload(file.file)
+    return {"url": result["secure_url"]}
 
 
 
@@ -44,7 +50,7 @@ def update_image_urls(new_host: str, db: Session = Depends(get_db)):
     for product in products:
         if product.image_url:
             filename = product.image_url.split("/")[-1]
-            new_url = f"http://{new_host}:8000/images/{filename}"
+            new_url = f"http://{new_host}/images/{filename}"
             product.image_url = new_url
 
     db.commit()
