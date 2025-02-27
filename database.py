@@ -3,9 +3,17 @@ from sqlalchemy import create_engine, Column, Integer, String, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# Используем переменную окружения для базы данных
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./test.db")  # SQLite для локальной разработки
+# Получаем URL базы из Render
+DATABASE_URL = os.getenv("DATABASE_URL")
 
+if not DATABASE_URL:
+    raise ValueError("ERROR: Переменная окружения DATABASE_URL не задана!")
+
+# Render использует "postgres://" вместо "postgresql://"
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://") + "?sslmode=require"
+
+# Создаём подключение
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
