@@ -1,4 +1,5 @@
 import logging
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import desc
@@ -6,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from db.depends import get_db
 from db.models import Product
-from schemas import ProductSchema
+from schemas import ProductPlacement, ProductSchema, ProductType
 from .images import router as images_router
 
 router = APIRouter(
@@ -21,9 +22,11 @@ logger = logging.getLogger(__name__)
 def get_products(
         min_price: float = Query(None, ge=0),
         max_price: float = Query(None, le=10000),
-        sort_by: str = Query("id", pattern="^(price|id|name|type|placement)$"),
-        sort_order: str = Query("desc", pattern="^(asc|desc)$"),  # Добавлен параметр для направления сортировки
-        placement: str = Query(None, regex="^(News|ComingSoon|TopBar)$"),  # Добавим параметр для фильтрации
+        sort_by: Literal["price", "id", "name", "type", "placement"] = Query("id"),
+        # Добавлен параметр для направления сортировки
+        sort_order: Literal["asc", "desc"] = Query("desc"),
+        placement: ProductPlacement = Query(None),  # Добавим параметр для
+        # фильтрации
         db: Session = Depends(get_db)
 ):
     logger.info(
@@ -74,13 +77,13 @@ def create_product(product: ProductSchema, db: Session = Depends(get_db)):
 
 
 @router.get("/placement/{placement}", response_model=list[ProductSchema])
-def get_products_by_placement(placement: str, db: Session = Depends(get_db)):
+def get_products_by_placement(placement: ProductPlacement, db: Session = Depends(get_db)):
     products = db.query(Product).filter(Product.placement == placement).all()
     return products
 
 
 @router.get("/type/{product_type}", response_model=list[ProductSchema])
-def get_products_by_type(product_type: str, db: Session = Depends(get_db)):
+def get_products_by_type(product_type: ProductType, db: Session = Depends(get_db)):
     products = db.query(Product).filter(Product.type == product_type).all()
 
     if not products:

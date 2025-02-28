@@ -1,6 +1,9 @@
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel
+
+ProductType = Literal["protein", "mix", "creatine"]
+ProductPlacement = Literal["TopBar", "News", "ComingSoon"]
 
 
 class ProductSchema(BaseModel):
@@ -10,5 +13,5 @@ class ProductSchema(BaseModel):
     description: str
     image_url: str
     coupon: str
-    type: str
-    placement: Optional[str] = "default"
+    type: ProductType
+    placement: Optional[ProductPlacement] = "default"
