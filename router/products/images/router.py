@@ -11,7 +11,6 @@ from schemas import ProductSchema
 
 router = APIRouter(
     prefix="/images",
-    tags=["images"],
 )
 
 logger = logging.getLogger(__name__)
