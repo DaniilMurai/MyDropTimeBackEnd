@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 from starlette.responses import FileResponse
 
 from config import UPLOAD_DIR
-from database import Product, get_db
+from db.depends import get_db
+from db.models import Product
 from schemas import ProductSchema
 
 router = APIRouter(

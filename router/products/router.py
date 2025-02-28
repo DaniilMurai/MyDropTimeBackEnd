@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from database import Product, get_db
+from db.depends import get_db
+from db.models import Product
 from schemas import ProductSchema
 from .images import router as images_router
 
