@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 # Эндпоинд для получения всех url изображений которые есть в базе на этот момент
-@router.get("/images/")
+@router.get("/")
 def list_images(db: Session = Depends(get_db)):
     products = db.query(Product.image_url).all()  # Запрашиваем поле image (не image_url)
     image_urls = [product.image_url for product in products]  # Получаем список ссылок
@@ -27,7 +27,7 @@ def list_images(db: Session = Depends(get_db)):
 
 
 # Эндпоинт для получения изображений
-@router.get("/images/{filename}")
+@router.get("/{filename}")
 async def get_image(filename: str):
     file_path = os.path.join(UPLOAD_DIR, filename)
     if not os.path.exists(file_path):
@@ -36,7 +36,7 @@ async def get_image(filename: str):
 
 
 # Обновление каритинки
-@router.put("/images/{product_id}", response_model=ProductSchema)
+@router.put("/{product_id}", response_model=ProductSchema)
 def update_image(product_id: int, image_url: str, db: Session = Depends(get_db)):
     db_product = db.query(Product).filter(Product.id == product_id).first()
 
