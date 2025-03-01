@@ -19,10 +19,11 @@ cloudinary.config(
 )
 
 
-@router.post("/upload-many-files/")
+@router.post("/upload/")
 async def upload_files(files: list[UploadFile] = File(...)):
+    Ї
     """Загружаем несколько изображений в Cloudinary и возвращаем ссылки без версии"""
-    uploaded_urls = []
+    uploaded_urls = [] 
 
     for file in files:
         original_filename = os.path.splitext(file.filename)[0]  # Убираем расширение
@@ -39,22 +40,6 @@ async def upload_files(files: list[UploadFile] = File(...)):
 
     return {"urls": uploaded_urls}
 
-
-@router.post("/upload/")
-async def upload_file(file: UploadFile = File(...)):
-    """Загружаем изображение в Cloudinary и возвращаем ссылку без версии"""
-    original_filename = os.path.splitext(file.filename)[0]  # Убираем расширение
-    result = cloudinary.uploader.upload(
-        file.file,
-        public_id=original_filename,  # Фиксированное имя файла
-        unique_filename=False,  # Отключаем случайные имена
-        overwrite=True  # Разрешаем перезапись
-    )
-
-    # Убираем версию из ссылки
-    clean_url = result["secure_url"].replace(f"/v{result['version']}/", "/")
-
-    return {"url": clean_url}
 
 
 @router.get("/images/")
