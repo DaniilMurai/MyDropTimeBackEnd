@@ -16,5 +16,7 @@ class Product(Base):
     type = Column(String(100))
     placement = Column(String(100))
 
+
     # Связь с категориями через таблицу product_categories
     categories = relationship("Category", secondary=product_categories, back_populates="products")
+

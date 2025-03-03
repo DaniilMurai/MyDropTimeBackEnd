@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from db import Category
 from db.depends import get_db
 from db.models import Product
 from schemas import ProductPlacement, ProductSchema, ProductType, CategorySchema
@@ -20,22 +19,24 @@ logger = logging.getLogger(__name__)
 
 
 @router.get("/", response_model=list[ProductSchema])
-def get_products(
-        min_price: float = Query(None, ge=0),
-        max_price: float = Query(None, le=10000),
-        sort_by: Literal["price", "id", "name", "type", "placement"] = Query("id"),
-        # Добавлен параметр для направления сортировки
-        sort_order: Literal["asc", "desc"] = Query("desc"),
-        placement: ProductPlacement = Query(None),  # Добавим параметр для
-        # фильтрации
-        db: Session = Depends(get_db)
-):
+def get_products(category_id: int | None = None,
+                 min_price: float = Query(None, ge=0),
+                 max_price: float = Query(None, le=10000),
+                 sort_by: Literal["price", "id", "name", "type", "placement"] = Query("id"),
+                 # Добавлен параметр для направления сортировки
+                 sort_order: Literal["asc", "desc"] = Query("desc"),
+                 placement: ProductPlacement = Query(None),  # Добавим параметр для
+                 # фильтрации
+                 db: Session = Depends(get_db)
+                 ):
     logger.info(
         "Received request for products with filters: min_price=%s, max_price=%s, sort_by=%s, sort_order=%s, placement=%s",
         min_price, max_price, sort_by, sort_order, placement
     )
 
     query = db.query(Product)
+    if category_id:
+        query = query.filter(Product.categories.any(id=category_id))
 
     if min_price is not None:
         query = query.filter(Product.price >= min_price)
@@ -83,6 +84,7 @@ def get_products_by_placement(placement: ProductPlacement, db: Session = Depends
     return products
 
 
+# TODO удалить хуйню метод, но перед этим поменть во фронте обращение на просто get_products
 @router.get("/type/{product_type}", response_model=list[ProductSchema])
 def get_products_by_type(product_type: ProductType, db: Session = Depends(get_db)):
     products = db.query(Product).filter(Product.type == product_type).all()
@@ -134,6 +136,7 @@ def delete_product(product_id: int, db: Session = Depends(get_db)):
 
     return db_product
 
+
 # 📌 Получить все категории для продукта
 @router.get("/{product_id}/categories", response_model=list[CategorySchema])
 def get_categories_by_product(product_id: int, db: Session = Depends(get_db)):
@@ -144,6 +147,7 @@ def get_categories_by_product(product_id: int, db: Session = Depends(get_db)):
     # Извлекаем все категории, связанные с этим продуктом через промежуточную таблицу
     categories = product.categories
     return [{"category": c.category, "sub_category": c.sub_category} for c in categories]
+
 
 # Апдейт всех существующих url на картинки
 @router.put("/update-image-urls")
@@ -164,4 +168,3 @@ def update_image_urls(new_host: str, db: Session = Depends(get_db)):
 
 
 router.include_router(images_router)
-

@@ -13,3 +13,4 @@ test.db
 # Загруженные изображения (Render создаст их сам)
 uploaded_images/
 
+alembic/versions/*
