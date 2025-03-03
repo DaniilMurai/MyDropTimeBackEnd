@@ -6,4 +6,4 @@ router = APIRouter()
 
 router.include_router(products.router)
 router.include_router(cloudinary_.router)
-router.include_router(categories.router())
+router.include_router(categories.router)
