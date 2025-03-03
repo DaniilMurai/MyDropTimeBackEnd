@@ -1,3 +1,7 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+
 # Исключаем виртуальное окружение
 .venv/*
 __pycache__/
@@ -13,3 +17,5 @@ test.db
 # Загруженные изображения (Render создаст их сам)
 uploaded_images/
 
+# Миграции Alembic
+alembic/versions/*

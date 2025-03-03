@@ -21,7 +21,7 @@ cloudinary.config(
 
 @router.post("/upload/")
 async def upload_files(files: list[UploadFile] = File(...)):
-    Ї
+
     """Загружаем несколько изображений в Cloudinary и возвращаем ссылки без версии"""
     uploaded_urls = [] 
 

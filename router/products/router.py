@@ -5,9 +5,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
+from db import Category
 from db.depends import get_db
 from db.models import Product
-from schemas import ProductPlacement, ProductSchema, ProductType
+from schemas import ProductPlacement, ProductSchema, ProductType, CategorySchema
 from .images import router as images_router
 
 router = APIRouter(
@@ -133,6 +134,16 @@ def delete_product(product_id: int, db: Session = Depends(get_db)):
 
     return db_product
 
+# 📌 Получить все категории для продукта
+@router.get("/{product_id}/categories", response_model=list[CategorySchema])
+def get_categories_by_product(product_id: int, db: Session = Depends(get_db)):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    # Извлекаем все категории, связанные с этим продуктом через промежуточную таблицу
+    categories = product.categories
+    return [{"category": c.category, "sub_category": c.sub_category} for c in categories]
 
 # Апдейт всех существующих url на картинки
 @router.put("/update-image-urls")
@@ -153,3 +164,4 @@ def update_image_urls(new_host: str, db: Session = Depends(get_db)):
 
 
 router.include_router(images_router)
+
