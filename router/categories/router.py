@@ -29,7 +29,7 @@ def get_categories(father_category_id: int | None = None, db: Session = Depends(
 
 
 @router.put("/{category_id}/", response_model=CategorySchema)
-def update_category(category_id: int, category_data: CategorySchema, db: Session = Depends(get_db())):
+def update_category(category_id: int, category_data: CategorySchema, db: Session = Depends(get_db)):
     db_category = db.query(Category).filter(category_id == Category.id).first()
     if not db_category:
         raise HTTPException(status_code=404, detail="Category not found")
