@@ -22,10 +22,37 @@ def create_category(category_data: CategorySchema, db: Session = Depends(get_db)
     return new_category
 
 
+CategorySchema.model_rebuild()
+
+
+# Функция для рекурсивного получения дерева категорий
+def get_category_tree(parent_id: int | None = None, db: Session = Depends(get_db), depth: int = 1) -> list[
+    CategorySchema]:
+    # Находим категории, у которых father_category_id равен parent_id.
+    categories = db.query(Category).filter(Category.father_category_id == parent_id).all()
+    result = []
+    for category in categories:
+        # Если ещё можно спускаться ниже (глубина больше 0), рекурсивно получаем подкатегории.
+        subcategories = get_category_tree(category.id, db, depth - 1) if depth > 0 else []
+        # Формируем объект схемы с вложенными подкатегориями.
+        result.append(CategorySchema(
+            id=category.id,
+            category=category.category,
+            father_category_id=category.father_category_id,
+            subcategories=subcategories
+        ))
+    return result
+
+
+# Эндпоинт для получения категорий с настройкой глубины вложенности.
 @router.get("/", response_model=list[CategorySchema])
-def get_categories(father_category_id: int | None = None, db: Session = Depends(get_db)):
-    categories = db.query(Category).filter(Category.father_category_id == father_category_id).all()
-    return categories
+def get_categories(
+        father_category_id: int | None = None,  # Если None – получаем категории верхнего уровня
+        depth: int = 1,
+        # Глубина рекурсии: 0 – только текущий уровень, 1 – добавить прямые подкатегории, 2 – еще глубже и т.д.
+        db: Session = Depends(get_db)
+):
+    return get_category_tree(father_category_id, db, depth)
 
 
 @router.put("/{category_id}/", response_model=CategorySchema)
