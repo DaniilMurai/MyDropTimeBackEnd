@@ -99,7 +99,7 @@ def delete_category(category_id: int, db: Session = Depends(get_db)):
     return {"message": f"Category {category.category} and all subcategories deleted"}
 
 
-@router.get("/{category_id}/products", response_model=ProductSchema)
+@router.get("/{category_id}/products", response_model=list[ProductSchema])
 def get_products_by_category(category_id: int, db: Session = Depends(get_db)):
     # Используйте contains() для проверки принадлежности категории продукту
     products = db.query(Product).filter(Product.categories.any(Category.id == category_id)).all()
