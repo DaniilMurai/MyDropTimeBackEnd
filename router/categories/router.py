@@ -5,8 +5,8 @@ from fastapi.params import Depends
 from sqlalchemy.orm import Session
 
 from db.depends import get_db
-from db.models import Category
-from schemas import CategorySchema
+from db.models import Category, Product
+from schemas import CategorySchema, ProductSchema
 
 router = APIRouter(
     prefix="/categories",
@@ -97,3 +97,11 @@ def delete_category(category_id: int, db: Session = Depends(get_db)):
 
     print(f"✅ Категория {category.category} (ID={category_id}) удалена.")
     return {"message": f"Category {category.category} and all subcategories deleted"}
+
+
+@router.get("/{category_id}/products", response_model=ProductSchema)
+def get_products_by_category(category_id: int, db: Session = Depends(get_db)):
+    products = db.query(Product).filter(Product.categories == category_id).all()
+    if not products:
+        raise HTTPException(status_code=404, detail="Products not found")
+    return products
