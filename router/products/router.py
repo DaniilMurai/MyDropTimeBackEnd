@@ -29,6 +29,7 @@ def get_products(category_id: int | None = None,
                  sort_order: Literal["asc", "desc"] = Query("desc"),
                  placement: ProductPlacement = Query(None),  # Добавим параметр для
                  # фильтрации
+
                  db: Session = Depends(get_db)
                  ):
     logger.info(
@@ -140,7 +141,7 @@ def delete_product(product_id: int, db: Session = Depends(get_db)):
 
 
 # Добавление продукта в категорию
-@router.post("/{product_id}/categories", response_model=CategorySchema)
+@router.post("/{product_id}/categories", response_model=ProductWithCategorySchema)
 def add_product_to_category(product_id: int, category_id: int, db: Session = Depends(get_db)):
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
