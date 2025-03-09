@@ -159,7 +159,7 @@ def add_product_to_category(product_id: int, category_id: int, db: Session = Dep
         product_id=product.id,
         product_name=product.name,
         category_id=category.id,
-        category_name=category.name
+        category_name=category.category
     )
 
 

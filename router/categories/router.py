@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 from fastapi.params import Depends
@@ -50,10 +50,13 @@ def get_category_tree(parent_id: int | None = None, db: Session = Depends(get_db
 @router.get("/", response_model=list[CategorySchema])
 def get_categories(
         father_category_id: int | None = None,  # Если None – получаем категории верхнего уровня
-        depth: Literal[0, 1, 2] = 1,
+        depth: Optional[int] = 1,  # Указываем дефолтное значение
         # Глубина рекурсии: 0 – только текущий уровень, 1 – добавить прямые подкатегории, 2 – еще глубже и т.д.
         db: Session = Depends(get_db)
 ):
+    # Если глубина вне диапазона, устанавливаем дефолтное значение
+    if depth not in [0, 1, 2]:
+        depth = 1
     return get_category_tree(father_category_id, db, depth)
 
 
