@@ -1,3 +1,5 @@
+from typing import Literal
+
 from fastapi import APIRouter, HTTPException
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
@@ -48,7 +50,7 @@ def get_category_tree(parent_id: int | None = None, db: Session = Depends(get_db
 @router.get("/", response_model=list[CategorySchema])
 def get_categories(
         father_category_id: int | None = None,  # Если None – получаем категории верхнего уровня
-        depth: int = 1,
+        depth: Literal[0, 1, 2] = 1,
         # Глубина рекурсии: 0 – только текущий уровень, 1 – добавить прямые подкатегории, 2 – еще глубже и т.д.
         db: Session = Depends(get_db)
 ):
@@ -71,7 +73,7 @@ def update_category(category_id: int, category_data: CategorySchema, db: Session
 
 
 @router.delete("/{category_id}/",
-               response_model=CategorySchema)  # TODO: добавить рекрсивное удаление дочерних категорий
+               response_model=CategorySchema)
 def delete_category(category_id: int, db: Session = Depends(get_db)):
     category = db.query(Category).filter(Category.id == category_id).first()
     if not category:

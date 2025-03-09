@@ -1,13 +1,15 @@
 import logging
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query
+from fastapi.params import Depends
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
+from db import Category
 from db.depends import get_db
 from db.models import Product
-from schemas import ProductPlacement, ProductSchema, ProductType, CategorySchema
+from schemas import ProductPlacement, ProductSchema, ProductType, CategorySchema, ProductWithCategorySchema
 from .images import router as images_router
 
 router = APIRouter(
@@ -137,6 +139,30 @@ def delete_product(product_id: int, db: Session = Depends(get_db)):
     return db_product
 
 
+# Добавление продукта в категорию
+@router.post("/{product_id}/categories", response_model=CategorySchema)
+def add_product_to_category(product_id: int, category_id: int, db: Session = Depends(get_db)):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    category = db.query(Category).filter(Category.id == category_id).first()
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+
+        # Добавляем связь через промежуточную таблицу
+    if category not in product.categories:
+        product.categories.append(category)
+        db.commit()  # Сохраняем изменения в базе
+
+    return ProductWithCategorySchema(
+        product_id=product.id,
+        product_name=product.name,
+        category_id=category.id,
+        category_name=category.name
+    )
+
+
 # 📌 Получить все категории для продукта
 @router.get("/{product_id}/categories", response_model=list[CategorySchema])
 def get_categories_by_product(product_id: int, db: Session = Depends(get_db)):
@@ -144,9 +170,11 @@ def get_categories_by_product(product_id: int, db: Session = Depends(get_db)):
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    # Извлекаем все категории, связанные с этим продуктом через промежуточную таблицу
+    # Извлекаем все категории, связанные с этим продуктом
     categories = product.categories
-    return [{"category": c.category, "sub_category": c.sub_category} for c in categories]
+
+    # Если схема CategorySchema содержит вложенные данные, их можно также передать
+    return categories  # Возвращаем категории как есть, схема автоматически подстроится
 
 
 # Апдейт всех существующих url на картинки
