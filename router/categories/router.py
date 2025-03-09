@@ -101,7 +101,8 @@ def delete_category(category_id: int, db: Session = Depends(get_db)):
 
 @router.get("/{category_id}/products", response_model=ProductSchema)
 def get_products_by_category(category_id: int, db: Session = Depends(get_db)):
-    products = db.query(Product).filter(Product.categories == category_id).all()
+    # Используйте contains() для проверки принадлежности категории продукту
+    products = db.query(Product).filter(Product.categories.any(Category.id == category_id)).all()
     if not products:
         raise HTTPException(status_code=404, detail="Products not found")
     return products
